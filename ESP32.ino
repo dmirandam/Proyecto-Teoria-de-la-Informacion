@@ -1,9 +1,3 @@
-// LISTA DE REPRODUCCION - ESP32 - ESP8266
-// https://www.youtube.com/playlist?list=PLZHVfZzF2DYID9jGK8EpcMni-U2CSTrw3
-
-// LISTA DE REPRODCUION DEL CURSO DE ARDUINO DESDE CERO
-// https://www.youtube.com/playlist?list=PLZHVfZzF2DYJeLXXxz6YtpBj4u7FoGPWN
-
 #include <Arduino.h>
 #include <SPI.h>
 #include <MFRC522.h>
@@ -13,6 +7,7 @@
 
 #define SS_PIN 5
 #define RST_PIN 22
+#define IR1_PIN 16
 
 // RFID Variables
 MFRC522 rfid(SS_PIN, RST_PIN); // Instance of the class
@@ -35,6 +30,7 @@ char* database = "Teo_Info";
 char* table = "logs";
 WiFiClient client;
 MySQL_Connection conn((Client *)&client);
+byte location;
 
 void(* resetFunc) (void) = 0; //declare reset function @ address 0
 
@@ -43,7 +39,9 @@ void setup()
   Serial.begin(9600);
   SPI.begin(); // Init SPI bus
   rfid.PCD_Init(); // Init MFRC522
+  pinMode(IR1_PIN, INPUT);
   len = 18;
+  location = 0;
   for (byte i = 0; i < 6; i++) key.keyByte[i] = 0xFF;
   Serial.println("Iniciando el Programa");
   //startWifi();  //Uncomment when database works @MirandaHpt4
@@ -70,6 +68,10 @@ void startWifi(){
 
 void loop() 
 {
+
+  if(!digitalRead(IR1_PIN)) location = 1;
+  //if(!digitalRead(IR2_PIN)) location = 2;
+
   // Reset the loop if no new card present on the sensor/reader. This saves the entire process when idle.
   if ( !rfid.PICC_IsNewCardPresent() ) return;
 
@@ -79,8 +81,11 @@ void loop()
   Serial.println(F("**Card Detected:**\n"));
   read();
   Serial.println(F("\n**End Reading**\n"));
-  Serial.println(F("**Sending Data to Server:**"));
+  Serial.println(F("**Sending Data to Server**"));
   //save();   //Uncomment when database works @MirandaHpt4
+  Serial.print("Location: Salon ");
+  Serial.println(location);
+  location = 0;
   Serial.println(F("**Data Sent Successfully**\n"));
 
   delay(300); //change value if you want to read cards faster
@@ -133,9 +138,14 @@ String readTag(byte block, MFRC522::MIFARE_Key key, byte len){
 void save() {
 
   String fecha_hora = obtenerFechaHoraActual();
+  char* ubicacion;
+
+  if(location==1) ubicacion = "Salon A";
+  else if(location==2) ubicacion = "Salon B";
+  else ubicacion = "Salon";
   
   char query[256];
-  snprintf(query, sizeof(query), "USE %s; INSERT INTO %s (item, ubicacion, fecha_hora) VALUES ('%s', '%s', '%s')", database, table, data[2], "A", fecha_hora.c_str());
+  snprintf(query, sizeof(query), "USE %s; INSERT INTO %s (item, ubicacion, fecha_hora) VALUES ('%s', '%s', '%s')", database, table, data[2], ubicacion, fecha_hora.c_str());
   MySQL_Cursor* cursor = new MySQL_Cursor(&conn);
 
   cursor->execute(query);
