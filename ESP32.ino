@@ -20,8 +20,8 @@ String data[infoLength];
 String fields[] = {"Name", "ID", "Object"};
 
 // ESP32 Variables
-const char* ssid = "FAMILIALOMBANA";
-const char* password = "GL0MB4N463";
+const char* ssid = "RED 1";
+const char* password = "1001283573";
 IPAddress serverIP(44, 198, 77, 190); // 44.198.77.190
 unsigned int serverPort = 3306; 
 char* user = "admin";
@@ -44,7 +44,7 @@ void setup()
   location = 0;
   for (byte i = 0; i < 6; i++) key.keyByte[i] = 0xFF;
   Serial.println("Iniciando el Programa");
-  //startWifi();  //Uncomment when database works @MirandaHpt4
+  startWifi();  //Uncomment when database works @MirandaHpt4
   Serial.println(F("Read personal data on a MIFARE PICC:"));    //shows in serial that it is ready to read
 }
 
@@ -82,7 +82,7 @@ void loop()
   read();
   Serial.println(F("\n**End Reading**\n"));
   Serial.println(F("**Sending Data to Server**"));
-  //save();   //Uncomment when database works @MirandaHpt4
+  save();   //Uncomment when database works @MirandaHpt4
   Serial.print("Location: Salon ");
   Serial.println(location);
   location = 0;
@@ -145,7 +145,7 @@ void save() {
   else ubicacion = "Salon";
   
   char query[256];
-  snprintf(query, sizeof(query), "USE %s; INSERT INTO %s (item, ubicacion, fecha_hora) VALUES ('%s', '%s', '%s')", database, table, data[2], ubicacion, fecha_hora.c_str());
+  snprintf(query, sizeof(query), "USE %s; INSERT INTO %s (ID, Nombre, Objeto, Ubicacion, Fecha_Hora) VALUES ('%s', '%s', '%s', '%s', '%s')", database, table, data[1].c_str(), data[0].c_str(), data[2].c_str(), ubicacion, fecha_hora.c_str());
   MySQL_Cursor* cursor = new MySQL_Cursor(&conn);
 
   cursor->execute(query);
@@ -170,13 +170,3 @@ String obtenerFechaHoraActual() {
   
   return fecha_hora;
 }
-
-/* ESP 32 NODE MCU
-  Vcc <-> 3V3 (o Vin(5V) según la versión del módulo)
-  RST (Reset) <-> D22
-  GND (Masse) <-> GND
-  MISO (Master Input Slave Output) <-> 19
-  MOSI (Master Output Slave Input) <-> 23
-  SCK (Serial Clock) <-> 18
-  SS/SDA (Slave select) <-> 5
-*/
